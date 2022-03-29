@@ -1,0 +1,6 @@
+12:09:44 **** Incremental Build of configuration Debug for project TIM2 ****
+make -j8 all 
+make: Nothing to be done for 'all'.
+
+12:09:45 Build Finished (took 355ms)
+

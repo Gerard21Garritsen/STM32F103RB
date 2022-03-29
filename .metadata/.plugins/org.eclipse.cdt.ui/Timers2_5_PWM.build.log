@@ -1,0 +1,6 @@
+12:02:49 **** Incremental Build of configuration Debug for project Timers2_5_PWM ****
+make -j8 all 
+make: Nothing to be done for 'all'.
+
+12:02:49 Build Finished (took 355ms)
+

@@ -1,0 +1,203 @@
+//This project is an example of how to configure ADC on Continuous Mode
+#include "stm32f10x.h"
+
+#define CPU_CLOCK 72000000 //core clock frequency
+
+/*configure RCC clock to 72 MHz with PLL feed it by HSE clock
+ * use AHB with core clock, APB1 with 36 MHz and APB2 72 MHz
+*/
+void RCC_ClockInitialize(void);
+
+/*configure pins PA9 and PA10 as USART1 and PC4(ADC IN_14) and PA5,
+ * PA5 is configured as GPIO
+ */
+void GPIO_Initialize(void);
+
+/*configure SysTick to overflows each 1 ms*/
+void SysTick_Initialize(void);
+
+//function to make delays
+void Delay_ms(uint16_t time);
+
+//function to configure USART1 to operate with 9600 bps
+void USART1_Initialize(void);
+
+//function  to write ony one byte
+void USART1_Write1Byte(char dato);
+
+//function to write strings
+void USART1_WriteString(char *cadena);
+
+//function to configure ADC in continuous mode one channel
+void ADC_Initialize(void);
+
+//function to get ADC result
+uint16_t ADC_GetConversion(void);
+
+
+
+
+int main(void)
+{
+	RCC_ClockInitialize();
+	GPIO_Initialize();
+	SysTick_Initialize();
+	USART1_Initialize();
+
+
+	while(1)
+	{
+		USART1_WriteString("STM32F103RBTx");
+		Delay_ms(500);
+
+
+	}
+
+	return 0;
+}
+
+
+void RCC_ClockInitialize(void)
+{
+	//reset CFGR register and switch off PLL
+	RCC_DeInit();
+	RCC_PLLCmd(DISABLE);
+
+	//turn on HSE clock
+	RCC_HSEConfig(RCC_HSE_ON);
+	while(RCC_WaitForHSEStartUp() != SUCCESS);
+
+	//enable prefetch and configure 2 wait states due to core gonna be working with 72 MHz
+	FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
+	FLASH_SetLatency(FLASH_Latency_2);
+
+	//configure AHB, APB1, APB2, ADC prescalers and use HSE to feed PLL
+	RCC_HCLKConfig(RCC_SYSCLK_Div1);
+	RCC_PCLK1Config(RCC_HCLK_Div2); //APB1 divided by two to get 36 MHz
+	RCC_PCLK2Config(RCC_HCLK_Div1); //APB2 divided by one to get 72 MHz
+	RCC_ADCCLKConfig(RCC_PCLK2_Div6); //ADC divided by 6 to get 12 MHz
+
+	//select HSE as PLL clock source and PLL x 9 to get 72 MHz
+	RCC_PLLConfig(RCC_PLLSource_HSE_Div1, RCC_PLLMul_9);
+	RCC_PLLCmd(ENABLE); //turn on PLL
+	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK); //select PLL as main clock source
+	while(RCC_GetSYSCLKSource() != 0x08); //wait until PLL will be selected as main clock source
+
+}
+
+
+void GPIO_Initialize(void)
+{
+	RCC_APB2PeriphClockCmd(RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPCEN, ENABLE); //enable PORTA and PORTC clocks
+
+	GPIO_InitTypeDef GPIOA_InitStructure;
+
+	GPIOA_InitStructure.GPIO_Pin = GPIO_Pin_5; //PA5 onboard led
+	GPIOA_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIOA_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+	GPIO_Init(GPIOA, &GPIOA_InitStructure);
+
+	GPIOA_InitStructure.GPIO_Pin = GPIO_Pin_9; //Tx pin
+	GPIOA_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+
+	GPIO_Init(GPIOA, &GPIOA_InitStructure);
+
+	GPIOA_InitStructure.GPIO_Pin = GPIO_Pin_10; //Rx pin
+	GPIOA_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+
+	GPIO_Init(GPIOA, &GPIOA_InitStructure);
+
+	GPIO_InitTypeDef GPIOC_InitStructure;
+
+	GPIOC_InitStructure.GPIO_Pin = GPIO_Pin_4; //ADC pin
+	GPIOC_InitStructure.GPIO_Mode = GPIO_Mode_AIN; //analog input
+
+	GPIO_Init(GPIOC, &GPIOC_InitStructure);
+
+}
+
+
+void SysTick_Initialize(void)
+{
+	//select core clock as SysTick's clock source
+	SysTick -> CTRL = (uint32_t)(0x4);
+	SysTick -> VAL = (uint32_t)(0x0);
+	SysTick -> LOAD = (CPU_CLOCK/1000);
+	SysTick -> CTRL |= (uint32_t)(0x1); //turn on SysTick
+
+}
+
+
+void Delay_ms(uint16_t time)
+{
+	SysTick -> CTRL &= ~(uint32_t)(1 << 16); //clear flag
+	SysTick -> VAL = (uint32_t)(0x0); //clear buffer
+
+	for(uint32_t i = 0; i < time; i++)
+	{
+		while(!(SysTick -> CTRL & (uint32_t)(1 << 16)));
+
+		SysTick -> CTRL &= ~(uint32_t)(1 << 16); //clear flag
+	}
+
+}
+
+
+void USART1_Initialize(void)
+{
+	RCC_APB2PeriphClockCmd(RCC_APB2ENR_USART1EN, ENABLE);
+
+	USART_InitTypeDef USART1_InitStructure;
+
+	USART1_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
+	USART1_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART1_InitStructure.USART_Parity = USART_Parity_No; //without parity
+	USART1_InitStructure.USART_StopBits = USART_StopBits_1; //one Stop bit
+	USART1_InitStructure.USART_BaudRate = 9600; //9600 bauds
+	USART1_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+
+
+	USART_Init(USART1, &USART1_InitStructure);
+
+	USART_Cmd(USART1, ENABLE); //turn on USART1
+
+}
+
+
+void USART1_Write1Byte(char dato)
+{
+	USART_SendData(USART1, dato);
+
+	while(USART_GetFlagStatus(USART1, USART_FLAG_TC) != SET);
+
+}
+
+
+void USART1_WriteString(char *cadena)
+{
+	while(*cadena)
+	{
+		USART1_Write1Byte(*cadena);
+
+		cadena++;
+	}
+
+}
+
+
+void ADC_Initialize(void)
+{
+
+
+
+}
+
+
+uint16_t ADC_GetConversion(void)
+{
+	uint16_t result;
+
+
+	return result;
+}

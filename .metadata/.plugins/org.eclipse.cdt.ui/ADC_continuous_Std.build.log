@@ -1,0 +1,6 @@
+16:38:42 **** Incremental Build of configuration Debug for project ADC_continuous_Std ****
+make -j8 all 
+make: Nothing to be done for 'all'.
+
+16:38:42 Build Finished (took 354ms)
+

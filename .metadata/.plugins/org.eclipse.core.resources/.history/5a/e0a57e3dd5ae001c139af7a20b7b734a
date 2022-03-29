@@ -1,0 +1,103 @@
+/*This project is an example of how to configure Timer 6 as a simple
+* timer which overflows each 120 ms
+*/
+#include "stm32f10x.h"
+
+//Configure RCC clock using HSE clock directly with 8 MHz to feed core and
+//the rest of peripherals
+void RCC_ClockConfig(void);
+
+//Configure pin PA5 as general GPIO
+void GPIO_Initialize(void);
+
+//Configure Timer 6 to use it as simple timer
+void TIM6_Initialize(void);
+
+void TIM6_IRQHandler(void); //ISR TIM6 routine
+
+
+
+
+int main(void)
+{
+	RCC_ClockConfig();
+	GPIO_Initialize();
+	TIM6_Initialize();
+
+	//GPIOA -> BSRR |= 1 << 5;
+
+	while(1)
+	{
+
+
+	}
+
+	return 0;
+}
+
+
+void RCC_ClockConfig(void)
+{
+	//reset CFGR register and switch off PLL
+	RCC -> CFGR = (uint32_t)(0x0);
+	RCC -> CR &= ~(uint32_t)(1 << 24);
+	RCC -> CFGR = (uint32_t)(0x0);
+
+	//Change wait states to zero due to we're using speed less than 24 MHz
+	FLASH -> ACR = (uint32_t)(0x10);
+
+	//turn on HSE clock and wait to is ready
+	RCC -> CR |= (uint32_t)( 1 << 16);
+
+	while(!(RCC -> CR & (uint32_t)( 1 << 17)));
+
+	//switch to HSE clock as main clock and wait to is ready
+	RCC -> CFGR = (uint32_t)(0x1);
+
+	while(!(RCC -> CFGR & (uint32_t)(0x4)));
+
+}
+
+
+void GPIO_Initialize(void)
+{
+	RCC -> APB2ENR |= (uint32_t)(1 << 2); //enable GPIOA clock
+
+	GPIOA -> CRL = 0x44244444; //configure pin PA5 as GPIO with output Push-pull 2 MHz
+	GPIOA -> ODR |= (uint16_t)(0x0); //set on high low all GPIOA pins
+
+}
+
+
+void TIM6_Initialize(void)
+{
+	RCC -> APB1ENR |= (uint32_t)(1 << 4); //Enable TIM6 clock
+
+	TIM6 -> CR1 = (uint16_t)(0x80); //enable ARPE
+	TIM6 -> CR2 = (uint16_t)(0x00); //configure TRGO by UG bit
+	TIM6 -> EGR = (uint16_t)(0x01); //set UG bit
+	TIM6 -> DIER = (uint16_t)(0x01); //enable interrupt on overflow
+
+	//configure prescaler with the respective value and also ARR to temporize 120 ms
+	TIM6 -> PSC = 32;
+	TIM6 -> ARR = 29999;
+
+	TIM6 -> SR = (uint16_t)(0x0); //clear UIF flag
+
+	TIM6 -> CR1 |= (uint16_t)(0x1); //turn on Timer 6
+
+}
+
+
+void TIM6_IRQHandler(void)
+{
+	if(TIM6 -> SR & (uint16_t)(0x1))
+	{
+		TIM6 -> SR &= ~(uint16_t)(0x1); //clear UIF flag
+
+		//switch pin PA5 state
+		GPIOA -> ODR ^= (uint16_t)(1 << 5);
+
+	}
+
+}
