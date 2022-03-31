@@ -1,4 +1,4 @@
-13:01:12 **** Incremental Build of configuration Debug for project ADC_continuous_Std ****
+14:58:13 **** Incremental Build of configuration Debug for project ADC_continuous_Std ****
 make -j8 all 
 Building file: ../src/main.c
 Invoking: MCU GCC Compiler
@@ -19,5 +19,5 @@ arm-none-eabi-size "ADC_continuous_Std.elf"
   25684	   2508	   1152	  29344	   72a0	ADC_continuous_Std.elf
  
 
-13:01:14 Build Finished (took 1s.204ms)
+14:58:14 Build Finished (took 1s.256ms)
 

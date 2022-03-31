@@ -2,46 +2,46 @@
 #include <stdio.h>
 #include "stm32f10x.h"
 
-#define CPU_CLOCK 72000000 //core clock frequency 72 MHz
+#define CPU_CLOCK 72000000 //core clock frequency
 
 /*configure RCC clock to 72 MHz with PLL feed it by HSE clock
  * use AHB with core clock, APB1 with 36 MHz and APB2 72 MHz
 */
 void RCC_ClockInitialize(void);
 
-/*configure pins PA9 and PA10 as USART1 and
+/*configure pins PA9 and PA10 as USART1 and PC4(ADC IN_14) and PA5,
  * PA5 is configured as GPIO
  */
 void GPIO_Initialize(void);
 
-//function to configure USART1 to operate with 115200 bps
+/*configure SysTick to overflows each 1 ms*/
+void SysTick_Initialize(void);
+
+//function to make delays
+void Delay_ms(uint16_t time);
+
+//function to configure USART1 to operate with 9600 bps
 void USART1_Initialize(void);
 
-//function  to write only one character
+//function  to write ony one byte
 void USART1_WriteChar(char dato);
 
 //function to write strings
 void USART1_WriteString(char *cadena);
 
-//function to configure ADC in Continuous Mode One Channel
+//function to configure ADC in continuous mode one channel
 void ADC1_Initialize(void);
 
 //function to get ADC result
 uint16_t ADC1_GetConversion(void);
-
-//configure SysTick to overflows each 1 ms
-void SysTick_Initialize(void);
-
-//function to make delays
-void Delay_ms(uint16_t time);
 
 
 
 
 int main(void)
 {
-	char buffer[25]; //array to latch string with ADC conversion
-	float adc_res; //variable to latch ADC result
+	char buffer[25];
+	float adc_res;
 
 	RCC_ClockInitialize();
 	GPIO_Initialize();
@@ -52,11 +52,11 @@ int main(void)
 
 	while(1)
 	{
-		adc_res = ADC1_GetConversion() * 3.3/4095.0; //ADC's lecture turn to voltage
+		adc_res = ADC1_GetConversion() * 3.3/4095.0;
 
 		sprintf(buffer, "Voltage:%.3f\n\r", adc_res);
 
-		USART1_WriteString(buffer); //send through USART1
+		USART1_WriteString(buffer);
 		Delay_ms(500);
 
 
@@ -198,7 +198,7 @@ void ADC1_Initialize(void)
 	ADC_StartCalibration(ADC1);
 	while(ADC_GetCalibrationStatus(ADC1) != RESET);
 
-	ADC_Cmd(ADC1, ENABLE); //! Is important to re enable ADC after calibration sequence or it won't work¡
+	ADC_Cmd(ADC1, ENABLE);
 
 }
 
