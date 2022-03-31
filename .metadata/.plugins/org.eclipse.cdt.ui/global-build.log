@@ -1,6 +1,23 @@
-16:38:39 **** Incremental Build of configuration Debug for project ADC_continuous_Std ****
+10:43:19 **** Incremental Build of configuration Debug for project USART_Std ****
 make -j8 all 
-make: Nothing to be done for 'all'.
-16:38:42 **** Incremental Build of configuration Debug for project ADC_continuous_Std ****
+Building file: ../src/main.c
+Invoking: MCU GCC Compiler
+C:\Users\Garritsen\Documents\Courses\STM32_Microcontrollers\STM32F103RB\Projects_Bare_Metal\USART_Std\Debug
+arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -DSTM32 -DSTM32F1 -DSTM32F103RBTx -DDEBUG -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER -I"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/USART_Std/StdPeriph_Driver/inc" -I"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/USART_Std/inc" -I"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/USART_Std/CMSIS/device" -I"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/USART_Std/CMSIS/core" -O0 -g3 -Wall -fmessage-length=0 -ffunction-sections -c -MMD -MP -MF"src/main.d" -MT"src/main.o" -o "src/main.o" "../src/main.c"
+Finished building: ../src/main.c
+ 
+Building target: USART_Std.elf
+Invoking: MCU GCC Linker
+arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -u _printf_float -T"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/USART_Std/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "USART_Std.elf" @"objects.list"   -lm
+Finished building target: USART_Std.elf
+ 
+make --no-print-directory post-build
+Generating binary and Printing size information:
+arm-none-eabi-objcopy -O binary "USART_Std.elf" "USART_Std.bin"
+arm-none-eabi-size "USART_Std.elf"
+   text	   data	    bss	    dec	    hex	filename
+  24476	   2508	   1152	  28136	   6de8	USART_Std.elf
+ 
+10:43:22 **** Incremental Build of configuration Debug for project USART_Std ****
 make -j8 all 
 make: Nothing to be done for 'all'.

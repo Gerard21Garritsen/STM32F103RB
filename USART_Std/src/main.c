@@ -1,22 +1,31 @@
-/*This project is an example of how to configure USART0
- * with a baud rate of 115200 bps*/
+/*This project is an example of how to configure USART1
+ * working at 115200 bauds, 8 bit lenght and without parity
+ */
 #include <stdio.h>
-#include <stdarg.h>
-#include <stdint.h>
 #include "stm32f10x.h"
 
-//configure RCC clock to reach 72 MHz, using HSE with PLL x 9
-void RCC_ClockInitialize(void);
+#define CPU_FREQ 72000000 //core clock works with 72 MHz
 
-//configure SysTick timer to oveflows each 1 ms
+//configure RCC clock to use HSE with PLL x 9 to get 72 MHz
+void RCC_ClockConfig(void);
+
+//configure pin PTA5 as GPIO with Push-pull
+void GPIO_Config(void);
+
+//configure USART1 to operate at 115200 bauds, 8 bith leght and without parity
+void USART1_Initialize(void);
+
+//function to write one char through USART
+void USART1_WriteChar(char dato);
+
+//fucntion to write a string through USART
+void USART1_WriteString(char *cadena);
+
+//configure SysTick timer to overflows each 1 ms
 void SysTick_Initialize(void);
 
+//function to make delays usign SysTick timer as base
 void Delay_ms(uint16_t time);
-
-//configure USART0 working t 115200 bps
-void USART0_Initialize(void);
-
-void USART0_WriteString(char cadena[25]);
 
 
 
@@ -24,102 +33,95 @@ void USART0_WriteString(char cadena[25]);
 int main(void)
 {
 	char buffer[25];
-	double valor = 3.141;
+	float pi = 3.141592;
 
-	RCC_ClockInitialize();
+	RCC_ClockConfig();
+	GPIO_Config();
+	USART1_Initialize();
 	SysTick_Initialize();
-	USART0_Initialize();
-	//sprintf(buffer, "El valor es: %.3f", valor);
-	USART0_WriteString(buffer);
+
+	sprintf(buffer, "Pi vale: %.3f\n\r", pi);
 
 
 	while(1)
 	{
+		USART1_WriteString(buffer);
+		Delay_ms(100);
 
 
 	}
 
 	return 0;
-
 }
 
 
-void RCC_ClockInitialize(void)
+void RCC_ClockConfig(void)
 {
-	FLASH_SetLatency(FLASH_Latency_2);
-	FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
+	//Reset CFGR register and turn off PLL
+	RCC_DeInit();
+	RCC_PLLCmd(DISABLE);
 
-	RCC_DeInit(); //reset RCC
-	RCC_HSEConfig(RCC_HSE_ON); //enable HSE
+	//Enable HSE clock
+	RCC_HSEConfig(RCC_HSE_ON);
 	while(RCC_WaitForHSEStartUp() != SUCCESS);
 
-	RCC_SYSCLKConfig(RCC_SYSCLK_Div1);
+	//Enable prefetch and configure two wait states for FLASH
+	FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
+	FLASH_SetLatency(FLASH_Latency_2);
+
+	//Configure PLL source and prescalers
+	RCC_PLLConfig(RCC_PLLSource_HSE_Div1, RCC_PLLMul_9);
+	RCC_HCLKConfig(RCC_SYSCLK_Div1);
 	RCC_PCLK1Config(RCC_HCLK_Div2);
 	RCC_PCLK2Config(RCC_HCLK_Div1);
-	RCC_ADCCLKConfig(RCC_PCLK2_Div6); //configure ADC prescaler with 6
-	RCC_PLLConfig(RCC_PLLSource_HSE_Div1, RCC_PLLMul_9); //PLL clock source comes from HSE
-	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK); //select PLL as main clock source for core and peripherals
-	RCC_PLLCmd(ENABLE); //turn on PLL
-	while(RCC_GetFlagStatus(RCC_FLAG_PLLRDY) != SET);
-	while(RCC_GetSYSCLKSource() != 0x08); //wait until PLL is main CLK source
+	RCC_ADCCLKConfig(RCC_PCLK2_Div6);
+	RCC_PLLCmd(ENABLE);
+	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+	while(RCC_GetSYSCLKSource() != 0x08);
 
 }
 
 
-void SysTick_Initialize(void)
+void GPIO_Config(void)
 {
-	SysTick -> CTRL = (uint32_t)(0x0);
-	SysTick -> CTRL |= (uint32_t)(1 << 2);
-	SysTick -> LOAD = 72000000/1000;
-	SysTick -> CTRL |= (uint32_t)(0x1); //turn on SysTick timer
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+
+	GPIO_InitTypeDef GPIOA_StructureInit;
+
+	GPIOA_StructureInit.GPIO_Pin = GPIO_Pin_5;
+	GPIOA_StructureInit.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIOA_StructureInit.GPIO_Speed = GPIO_Speed_50MHz;
+
+	GPIO_Init(GPIOA, &GPIOA_StructureInit);
 
 }
 
 
-void Delay_ms(uint16_t time)
+void USART1_Initialize(void)
 {
-	SysTick -> VAL = (uint32_t)(0x0);
-	SysTick -> CTRL &= ~(1 << 16); //clear flag
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE); //turn on USART1 clock
 
-	for(uint16_t i = 0; i < time; i++)
-	{
-		while(!(SysTick -> CTRL & (uint32_t)(1 << 16)));
+	//Configure GPIO pins, USART1 use PA9 and PA10 pins (Tx and Rx respectively)
+	GPIO_InitTypeDef GPIOA_StructureInit;
 
-		SysTick -> CTRL &= ~(1 << 16); //clear flag
-
-	}
-
-}
-
-
-void USART0_Initialize(void)
-{
-	//configure GPIO pins for work with USART1
-
-	//enable GPIOA and USART1 clock
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_USART1, ENABLE);
-
-	GPIO_InitTypeDef GPIOA_StructureInit; //GPIOA structure
-
-	GPIOA_StructureInit.GPIO_Pin = GPIO_Pin_9; //Pin PA9 is Tx
+	GPIOA_StructureInit.GPIO_Pin = GPIO_Pin_9;
 	GPIOA_StructureInit.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIOA_StructureInit.GPIO_Speed = GPIO_Speed_50MHz;
 
 	GPIO_Init(GPIOA, &GPIOA_StructureInit);
 
-	GPIOA_StructureInit.GPIO_Pin = GPIO_Pin_10; //pin PA10 is Rx
-	GPIOA_StructureInit.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIOA_StructureInit.GPIO_Pin = GPIO_Pin_10;
+	GPIOA_StructureInit.GPIO_Mode = GPIO_Mode_IPU;
 
 	GPIO_Init(GPIOA, &GPIOA_StructureInit);
 
-	//configure USART1
+	//USART1 structure
 	USART_InitTypeDef USART1_StructureInit;
 
-	USART_DeInit(USART1);
 	USART1_StructureInit.USART_WordLength = USART_WordLength_8b;
-	USART1_StructureInit.USART_Mode = USART_Mode_Tx | USART_Mode_Rx; //Full duplex
+	USART1_StructureInit.USART_Parity = USART_Parity_No;
+	USART1_StructureInit.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 	USART1_StructureInit.USART_StopBits = USART_StopBits_1;
-	USART1_StructureInit.USART_Parity = USART_Parity_No; //sin paridad
 	USART1_StructureInit.USART_BaudRate = 115200;
 	USART1_StructureInit.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 
@@ -130,19 +132,49 @@ void USART0_Initialize(void)
 }
 
 
-void USART0_WriteString(char *cadena)
+void USART1_WriteChar(char dato)
 {
-	uint8_t i = 0; //indice recorre la cadena
+	USART_SendData(USART1, dato); //load dato into TXE buffer
 
-	while(*cadena != '\0')
+	while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) != SET); //wait until TXE buffer is empty
+
+}
+
+
+void USART1_WriteString(char *cadena)
+{
+	while(*cadena)
 	{
-		USART_SendData(USART1, *cadena);
-
-		while(USART_GetFlagStatus(USART1, USART_FLAG_TC) != SET);
+		USART1_WriteChar(*cadena);
 
 		cadena++;
-
 	}
 
+}
+
+
+void SysTick_Initialize(void)
+{
+	SysTick -> CTRL = (uint32_t)(0x4); //select core clock as clock source
+	SysTick -> LOAD = CPU_FREQ/1000; //load to get oveflows each 1 ms
+	SysTick -> VAL = (uint32_t)(0x0); //clear current value
+
+	SysTick -> CTRL |= (uint32_t)(0x1); //turn on SysTick
+
+}
+
+
+void Delay_ms(uint16_t time)
+{
+	SysTick -> CTRL &= ~(uint32_t)(1 << 16); //clear flag
+	SysTick -> VAL = (uint32_t)(0x0);
+
+	for(uint16_t i = 0; i < time; i++)
+	{
+		while(!(SysTick -> CTRL & (uint32_t)(1 << 16)));
+
+		SysTick -> CTRL &= ~(uint32_t)(1 << 16);
+
+	}
 
 }

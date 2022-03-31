@@ -35,7 +35,7 @@ all: USART_Std.elf
 USART_Std.elf: $(OBJS) $(USER_OBJS) C:\Users\Garritsen\Documents\Courses\STM32_Microcontrollers\STM32F103RB\Projects_Bare_Metal\USART_Std/LinkerScript.ld
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU GCC Linker'
-	arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -Xlinker -specs=nosys.specs-specs=nano.specs -u _printf_float -T"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/USART_Std/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "USART_Std.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
+	arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -u _printf_float -T"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/USART_Std/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "USART_Std.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build

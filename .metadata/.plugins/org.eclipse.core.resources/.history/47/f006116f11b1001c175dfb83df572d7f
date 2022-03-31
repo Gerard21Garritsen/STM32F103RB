@@ -1,0 +1,180 @@
+/*This project is an example of how to configure USART1
+ * working at 115200 bauds, 8 bit lenght and without parity
+ */
+#include <stdio.h>
+#include "stm32f10x.h"
+
+#define CPU_FREQ 72000000 //core clock works with 72 MHz
+
+//configure RCC clock to use HSE with PLL x 9 to get 72 MHz
+void RCC_ClockConfig(void);
+
+//configure pin PTA5 as GPIO with Push-pull
+void GPIO_Config(void);
+
+//configure USART1 to operate at 115200 bauds, 8 bith leght and without parity
+void USART1_Initialize(void);
+
+//function to write one char through USART
+void USART1_WriteChar(char dato);
+
+//fucntion to write a string through USART
+void USART1_WriteString(char *cadena);
+
+//configure SysTick timer to overflows each 1 ms
+void SysTick_Initialize(void);
+
+//function to make delays usign SysTick timer as base
+void Delay_ms(uint16_t time);
+
+
+
+
+int main(void)
+{
+	uint8_t buffer[25];
+	float pi = 3.141592;
+
+	RCC_ClockConfig();
+	GPIO_Config();
+	USART1_Initialize();
+	SysTick_Initialize();
+
+	sprintf(buffer, "Pi vale: %.3f", pi);
+
+
+	while(1)
+	{
+		USART1_WriteString(buffer);
+		Delay_ms(100);
+
+
+	}
+
+	return 0;
+}
+
+
+void RCC_ClockConfig(void)
+{
+	//Reset CFGR register and turn off PLL
+	RCC_DeInit();
+	RCC_PLLCmd(DISABLE);
+
+	//Enable HSE clock
+	RCC_HSEConfig(RCC_HSE_ON);
+	while(RCC_WaitForHSEStartUp() != SUCCESS);
+
+	//Enable prefetch and configure two wait states for FLASH
+	FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
+	FLASH_SetLatency(FLASH_Latency_2);
+
+	//Configure PLL source and prescalers
+	RCC_PLLConfig(RCC_PLLSource_HSE_Div1, RCC_PLLMul_9);
+	RCC_HCLKConfig(RCC_SYSCLK_Div1);
+	RCC_PCLK1Config(RCC_HCLK_Div2);
+	RCC_PCLK2Config(RCC_HCLK_Div1);
+	RCC_ADCCLKConfig(RCC_PCLK2_Div6);
+	RCC_PLLCmd(ENABLE);
+	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+	while(RCC_GetSYSCLKSource() != 0x08);
+
+}
+
+
+void GPIO_Config(void)
+{
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+
+	GPIO_InitTypeDef GPIOA_StructureInit;
+
+	GPIOA_StructureInit.GPIO_Pin = GPIO_Pin_5;
+	GPIOA_StructureInit.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIOA_StructureInit.GPIO_Speed = GPIO_Speed_50MHz;
+
+	GPIO_Init(GPIOA, &GPIOA_StructureInit);
+
+}
+
+
+void USART1_Initialize(void)
+{
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE); //turn on USART1 clock
+
+	//Configure GPIO pins, USART1 use PA9 and PA10 pins (Tx and Rx respectively)
+	GPIO_InitTypeDef GPIOA_StructureInit;
+
+	GPIOA_StructureInit.GPIO_Pin = GPIO_Pin_9;
+	GPIOA_StructureInit.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIOA_StructureInit.GPIO_Speed = GPIO_Speed_50MHz;
+
+	GPIO_Init(GPIOA, &GPIOA_StructureInit);
+
+	GPIOA_StructureInit.GPIO_Pin = GPIO_Pin_10;
+	GPIOA_StructureInit.GPIO_Mode = GPIO_Mode_IPU;
+
+	GPIO_Init(GPIOA, &GPIOA_StructureInit);
+
+	//USART1 structure
+	USART_InitTypeDef USART1_StructureInit;
+
+	USART1_StructureInit.USART_WordLength = USART_WordLength_8b;
+	USART1_StructureInit.USART_Parity = USART_Parity_No;
+	USART1_StructureInit.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
+	USART1_StructureInit.USART_StopBits = USART_StopBits_1;
+	USART1_StructureInit.USART_BaudRate = 115200;
+	USART1_StructureInit.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+
+	USART_Init(USART1, &USART1_StructureInit);
+
+	USART_Cmd(USART1, ENABLE); //turn on USART1
+
+}
+
+
+void USART1_WriteChar(char dato)
+{
+	USART_SendData(USART1, dato); //load dato into TXE buffer
+
+	while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) != SET); //wait until TXE buffer is empty
+
+}
+
+
+void USART1_WriteString(char *cadena)
+{
+	while(*cadena)
+	{
+		USART1_WriteChar(*cadena);
+
+		cadena++;
+	}
+
+}
+
+
+void SysTick_Initialize(void)
+{
+	SysTick -> CTRL = (uint32_t)(0x4); //select core clock as clock source
+	SysTick -> LOAD = CPU_FREQ/1000; //load to get oveflows each 1 ms
+	SysTick -> VAL = (uint32_t)(0x0); //clear current value
+
+	SysTick -> CTRL |= (uint32_t)(0x1); //turn on SysTick
+
+}
+
+
+void Delay_ms(uint16_t time)
+{
+	SysTick -> CTRL &= ~(uint32_t)(1 << 16); //clear flag
+	SysTick -> VAL = (uint32_t)(0x0);
+
+	for(uint16_t i = 0; i < time; i++)
+	{
+		while(!(SysTick -> CTRL & (uint32_t)(1 << 16)));
+
+		SysTick -> CTRL &= ~(uint32_t)(1 << 16);
+
+	}
+
+}

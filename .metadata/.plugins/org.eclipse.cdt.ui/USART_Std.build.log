@@ -1,6 +1,6 @@
-16:26:34 **** Incremental Build of configuration Debug for project USART_Std ****
+10:43:22 **** Incremental Build of configuration Debug for project USART_Std ****
 make -j8 all 
 make: Nothing to be done for 'all'.
 
-16:26:34 Build Finished (took 345ms)
+10:43:22 Build Finished (took 389ms)
 
