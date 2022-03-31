@@ -1,6 +1,23 @@
-16:38:42 **** Incremental Build of configuration Debug for project ADC_continuous_Std ****
+13:01:12 **** Incremental Build of configuration Debug for project ADC_continuous_Std ****
 make -j8 all 
-make: Nothing to be done for 'all'.
+Building file: ../src/main.c
+Invoking: MCU GCC Compiler
+C:\Users\Garritsen\Documents\Courses\STM32_Microcontrollers\STM32F103RB\Projects_Bare_Metal\ADC_continuous_Std\Debug
+arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -DSTM32 -DSTM32F1 -DSTM32F103RBTx -DDEBUG -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER -I"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/ADC_continuous_Std/StdPeriph_Driver/inc" -I"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/ADC_continuous_Std/inc" -I"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/ADC_continuous_Std/CMSIS/device" -I"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/ADC_continuous_Std/CMSIS/core" -O0 -g3 -Wall -fmessage-length=0 -ffunction-sections -c -MMD -MP -MF"src/main.d" -MT"src/main.o" -o "src/main.o" "../src/main.c"
+Finished building: ../src/main.c
+ 
+Building target: ADC_continuous_Std.elf
+Invoking: MCU GCC Linker
+arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -u _printf_float -T"C:/Users/Garritsen/Documents/Courses/STM32_Microcontrollers/STM32F103RB/Projects_Bare_Metal/ADC_continuous_Std/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "ADC_continuous_Std.elf" @"objects.list"   -lm
+Finished building target: ADC_continuous_Std.elf
+ 
+make --no-print-directory post-build
+Generating binary and Printing size information:
+arm-none-eabi-objcopy -O binary "ADC_continuous_Std.elf" "ADC_continuous_Std.bin"
+arm-none-eabi-size "ADC_continuous_Std.elf"
+   text	   data	    bss	    dec	    hex	filename
+  25684	   2508	   1152	  29344	   72a0	ADC_continuous_Std.elf
+ 
 
-16:38:42 Build Finished (took 354ms)
+13:01:14 Build Finished (took 1s.204ms)
 

@@ -97,7 +97,7 @@ void RCC_ClockInitialize(void)
 
 void GPIO_Initialize(void)
 {
-	RCC_APB2PeriphClockCmd(RCC_APB2ENR_IOPAEN, ENABLE); //enable PORTA clock
+	RCC_APB2PeriphClockCmd(RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPCEN, ENABLE); //enable PORTA and PORTC clocks
 
 	GPIO_InitTypeDef GPIOA_InitStructure;
 
@@ -118,6 +118,13 @@ void GPIO_Initialize(void)
 
 	GPIO_Init(GPIOA, &GPIOA_InitStructure);
 
+	GPIO_InitTypeDef GPIOC_InitStructure;
+
+	GPIOC_InitStructure.GPIO_Pin = GPIO_Pin_4; //ADC pin
+	GPIOC_InitStructure.GPIO_Mode = GPIO_Mode_AIN; //analog input
+
+	GPIO_Init(GPIOC, &GPIOC_InitStructure);
+
 }
 
 
@@ -131,7 +138,7 @@ void USART1_Initialize(void)
 	USART1_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART1_InitStructure.USART_Parity = USART_Parity_No; //without parity
 	USART1_InitStructure.USART_StopBits = USART_StopBits_1; //one Stop bit
-	USART1_InitStructure.USART_BaudRate = 115200; //115200 bauds
+	USART1_InitStructure.USART_BaudRate = 115200; //9600 bauds
 	USART1_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 
 

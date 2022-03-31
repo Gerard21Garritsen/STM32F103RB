@@ -40,23 +40,21 @@ uint16_t ADC1_GetConversion(void);
 
 int main(void)
 {
-	char buffer[25];
+	char buffer[40];
 	float adc_res;
 
 	RCC_ClockInitialize();
 	GPIO_Initialize();
 	USART1_Initialize();
-	ADC1_Initialize();
+	ADC1_Initalize();
 	SysTick_Initialize();
 
 
 	while(1)
 	{
-		adc_res = ADC1_GetConversion() * 3.3/4095;
+		adc_res = ADC1_GetConversion();
 
 		sprintf(buffer, "Voltage:%.3f\n\r", adc_res);
-
-		USART1_WriteString(buffer);
 		Delay_ms(500);
 
 
@@ -97,7 +95,7 @@ void RCC_ClockInitialize(void)
 
 void GPIO_Initialize(void)
 {
-	RCC_APB2PeriphClockCmd(RCC_APB2ENR_IOPAEN, ENABLE); //enable PORTA clock
+	RCC_APB2PeriphClockCmd(RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPCEN, ENABLE); //enable PORTA and PORTC clocks
 
 	GPIO_InitTypeDef GPIOA_InitStructure;
 
@@ -118,6 +116,13 @@ void GPIO_Initialize(void)
 
 	GPIO_Init(GPIOA, &GPIOA_InitStructure);
 
+	GPIO_InitTypeDef GPIOC_InitStructure;
+
+	GPIOC_InitStructure.GPIO_Pin = GPIO_Pin_4; //ADC pin
+	GPIOC_InitStructure.GPIO_Mode = GPIO_Mode_AIN; //analog input
+
+	GPIO_Init(GPIOC, &GPIOC_InitStructure);
+
 }
 
 
@@ -131,7 +136,7 @@ void USART1_Initialize(void)
 	USART1_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART1_InitStructure.USART_Parity = USART_Parity_No; //without parity
 	USART1_InitStructure.USART_StopBits = USART_StopBits_1; //one Stop bit
-	USART1_InitStructure.USART_BaudRate = 115200; //115200 bauds
+	USART1_InitStructure.USART_BaudRate = 115200; //9600 bauds
 	USART1_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 
 
@@ -208,7 +213,7 @@ uint16_t ADC1_GetConversion(void)
 
 	result = ADC_GetConversionValue(ADC1); //latched aADC result into variable
 
-	//while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) != SET); // wait upon finished conversion
+	while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) != SET); // wait upon finished conversion
 
 	return result;
 }

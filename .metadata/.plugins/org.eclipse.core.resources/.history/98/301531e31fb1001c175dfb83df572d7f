@@ -30,32 +30,29 @@ void USART1_WriteChar(char dato);
 void USART1_WriteString(char *cadena);
 
 //function to configure ADC in continuous mode one channel
-void ADC1_Initialize(void);
+void ADC_Initialize(void);
 
 //function to get ADC result
-uint16_t ADC1_GetConversion(void);
+uint16_t ADC_GetConversion(void);
 
 
 
 
 int main(void)
 {
-	char buffer[25];
-	float adc_res;
+	char buffer[40];
+	float dato = 3.56798;
 
 	RCC_ClockInitialize();
 	GPIO_Initialize();
-	USART1_Initialize();
-	ADC1_Initialize();
 	SysTick_Initialize();
+	USART1_Initialize();
+
+	sprintf(buffer, "El valor es:%.3f\n\r", dato);
 
 
 	while(1)
 	{
-		adc_res = ADC1_GetConversion() * 3.3/4095;
-
-		sprintf(buffer, "Voltage:%.3f\n\r", adc_res);
-
 		USART1_WriteString(buffer);
 		Delay_ms(500);
 
@@ -97,7 +94,7 @@ void RCC_ClockInitialize(void)
 
 void GPIO_Initialize(void)
 {
-	RCC_APB2PeriphClockCmd(RCC_APB2ENR_IOPAEN, ENABLE); //enable PORTA clock
+	RCC_APB2PeriphClockCmd(RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPCEN, ENABLE); //enable PORTA and PORTC clocks
 
 	GPIO_InitTypeDef GPIOA_InitStructure;
 
@@ -118,6 +115,13 @@ void GPIO_Initialize(void)
 
 	GPIO_Init(GPIOA, &GPIOA_InitStructure);
 
+	GPIO_InitTypeDef GPIOC_InitStructure;
+
+	GPIOC_InitStructure.GPIO_Pin = GPIO_Pin_4; //ADC pin
+	GPIOC_InitStructure.GPIO_Mode = GPIO_Mode_AIN; //analog input
+
+	GPIO_Init(GPIOC, &GPIOC_InitStructure);
+
 }
 
 
@@ -131,7 +135,7 @@ void USART1_Initialize(void)
 	USART1_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART1_InitStructure.USART_Parity = USART_Parity_No; //without parity
 	USART1_InitStructure.USART_StopBits = USART_StopBits_1; //one Stop bit
-	USART1_InitStructure.USART_BaudRate = 115200; //115200 bauds
+	USART1_InitStructure.USART_BaudRate = 115200; //9600 bauds
 	USART1_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 
 
@@ -163,7 +167,7 @@ void USART1_WriteString(char *cadena)
 }
 
 
-void ADC1_Initialize(void)
+void ADC_Initialize(void)
 {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE); //enable ADC1 clock
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE); //enable GPIOC clock
@@ -202,13 +206,11 @@ void ADC1_Initialize(void)
 }
 
 
-uint16_t ADC1_GetConversion(void)
+uint16_t ADC_GetConversion(void)
 {
 	uint16_t result;
 
-	result = ADC_GetConversionValue(ADC1); //latched aADC result into variable
-
-	//while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) != SET); // wait upon finished conversion
+	result = ADC_GetConversion(ADC1); //latched aADC result into variable
 
 	return result;
 }
